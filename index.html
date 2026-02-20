@@ -3,33 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Truck Sheet Form</title>
+    <title>Filtrum Construction Truck Sheet</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Truck Sheet Form</h1>
-    <form action="/submit-form" method="post">
-        <label for="truckNumber">Truck Number:</label>
-        <input type="text" id="truckNumber" name="truckNumber" required><br><br>
+    <header>
+        <h1>Filtrum Construction Truck Sheet</h1>
+    </header>
+    <form action="submit.php" method="POST">
+        <label for="truck-id">Truck ID:</label>
+        <input type="text" id="truck-id" name="truck-id" required>
 
-        <label for="driverName">Driver Name:</label>
-        <input type="text" id="driverName" name="driverName" required><br><br>
+        <label for="owner-name">Owner Name:</label>
+        <input type="text" id="owner-name" name="owner-name" required>
 
-        <label for="loadType">Load Type:</label>
-        <input type="text" id="loadType" name="loadType" required><br><br>
+        <label for="load-type">Load Type:</label>
+        <input type="text" id="load-type" name="load-type" required>
 
-        <label for="pickupLocation">Pickup Location:</label>
-        <input type="text" id="pickupLocation" name="pickupLocation" required><br><br>
-
-        <label for="dropOffLocation">Drop Off Location:</label>
-        <input type="text" id="dropOffLocation" name="dropOffLocation" required><br><br>
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" name="destination" required>
 
         <label for="date">Date:</label>
-        <input type="date" id="date" name="date" required><br><br>
+        <input type="date" id="date" name="date" required>
 
-        <label for="time">Time:</label>
-        <input type="time" id="time" name="time" required><br><br>
-
-        <input type="submit" value="Submit">
+        <button type="submit">Submit</button>
     </form>
+    <footer>
+        <p>&copy; 2026 Filtrum Construction</p>
+    </footer>
 </body>
 </html>
