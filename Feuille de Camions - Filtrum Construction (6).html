@@ -1,0 +1,258 @@
+<html lang="fr" data-theme="light"><head>
+    <meta charset="UTF-8">
+    <!-- Empêche le zoom automatique sur iPad lors de la saisie -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Feuille de Camions - Filtrum Construction</title>
+    
+    <!-- Tailwind, DaisyUI et Flowbite CDNs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@latest/dist/flowbite.min.css" rel="stylesheet">
+    
+    <style>
+        /* Correction Datepicker : Fond blanc opaque et bien visible sur iPad */
+        .datepicker { background-color: #ffffff !important; opacity: 1 !important; z-index: 9999 !important; border: 1px solid #d1d5db !important; }
+        .datepicker-picker { background-color: #ffffff !important; }
+        
+        /* Signature cursive */
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+        .signature-font { font-family: 'Dancing Script', cursive; font-size: 2.5rem; color: #1e3a8a; }
+
+        /* Boutons + et x agrandis pour les doigts (iPad) */
+        .btn-touch {
+            min-height: 44px !important;
+            min-width: 44px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Désactivation des flèches sur les inputs number pour un look plus propre */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="bg-slate-100 p-2 md:p-6 text-slate-900">
+
+    <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden border border-gray-200">
+        
+        <!-- Header -->
+        <div class="bg-white border-b border-gray-100 p-6 flex flex-wrap justify-between items-center gap-6">
+            <div class="flex items-center gap-6">
+                <!-- Logo FILTRUM CONSTRUCTION (SVG) -->
+                <div class="flex flex-col items-center">
+                    <svg width="60" height="35" viewBox="0 0 100 70" fill="none">
+                        <path d="M0 12C0 5.37258 5.37258 0 12 0H42V25H12C5.37258 25 0 19.6274 0 12Z" fill="#00AED9"></path>
+                        <path d="M58 0H88C94.6274 0 100 5.37258 100 12V25H70C63.3726 25 58 19.6274 58 12V0Z" fill="#002D62"></path>
+                        <path d="M0 35H30V60H12C5.37258 60 0 54.6274 0 48V35Z" fill="#00AED9"></path>
+                        <path d="M40 35H88C94.6274 35 100 40.3726 100 47C100 53.6274 94.6274 59 88 59H40V35Z" fill="#002D62"></path>
+                    </svg>
+                    <span class="text-lg font-black tracking-tighter text-[#002D62] mt-1">FILTRUM</span>
+                    <span class="text-[7px] font-bold tracking-[0.35em] text-[#002D62] uppercase">Construction</span>
+                </div>
+                <h1 class="text-xl font-bold uppercase text-slate-700">Feuille de Camions</h1>
+            </div>
+            <div class="flex gap-2 no-print">
+                <button onclick="window.print()" class="btn btn-ghost btn-sm">PDF</button>
+                <button onclick="checkAndConfirm()" class="btn btn-primary btn-sm px-10 shadow-lg uppercase font-bold">Envoyer</button>
+            </div>
+        </div>
+
+        <form id="timeForm" class="p-6 md:p-8 space-y-10">
+            
+            <!-- Identification -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold text-xs uppercase text-blue-700">No Camion *</span></label>
+                    <input type="text" id="camion-no" placeholder="Ex: C-502" class="input input-bordered w-full border-blue-400 bg-blue-50/10">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold text-xs uppercase text-blue-700">Nom du Responsable *</span></label>
+                    <input type="text" id="resp-name" placeholder="Prénom Nom" class="input input-bordered w-full border-blue-400 bg-blue-50/10 font-semibold">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold text-xs uppercase text-blue-700">Semaine finissant le *</span></label>
+                    <input type="date" id="week-date" class="input input-bordered w-full border-blue-400 bg-blue-50/10">
+                </div>
+            </div>
+
+            <!-- Tableau Saisie Journalière -->
+            <div class="overflow-x-auto border border-gray-200 rounded-2xl bg-white shadow-sm">
+                <table class="table w-full" id="main-table">
+                    <thead class="bg-slate-800 text-white uppercase text-[10px]">
+                        <tr>
+                            <th class="w-32">Jour</th>
+                            <th class="w-32"># Projet (5 ch.)</th>
+                            <th class="text-center">KM</th>
+                            <th class="text-center">Heures</th>
+                            <th class="w-20 no-print text-center">Ajouter</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Résumé & Sécurité -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+                <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+                    <div class="bg-slate-100 px-6 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest border-b">Résumé hebdomadaire</div>
+                    <table class="table table-compact w-full text-sm">
+                        <tbody id="summary-body"></tbody>
+                        <tfoot class="bg-slate-50 border-t-2 font-black italic">
+                            <tr><td class="text-right">TOTAL :</td><td class="text-center text-blue-600" id="final-km">0</td><td class="text-center text-indigo-600" id="final-hours">0</td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200">
+                    <h3 class="font-bold text-blue-900 mb-4 uppercase text-xs tracking-widest">Inspection Sécurité</h3>
+                    <div class="form-control mb-5">
+                        <label class="label"><span class="label-text font-bold text-blue-700 text-[10px] uppercase text-blue-700">Dernière inspection *</span></label>
+                        <input datepicker="" datepicker-autohide="" type="text" id="insp-date" class="bg-white border-blue-400 border rounded-xl w-full p-3" placeholder="Choisir la date">
+                    </div>
+                    <div class="space-y-4">
+                        <label class="flex items-center gap-4 cursor-pointer"><input type="checkbox" id="check-jauge" class="checkbox checkbox-primary"><span class="text-sm font-semibold">Jauge VERT</span></label>
+                        <label class="flex items-center gap-4 cursor-pointer"><input type="checkbox" id="check-trousse" class="checkbox checkbox-primary"><span class="text-sm font-semibold">Trousse OK</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signature Automatisée -->
+            <div class="pt-12 flex justify-end">
+                <div class="w-full md:w-80 border-t-2 border-slate-900 pt-3 text-center">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Signature du Responsable</p>
+                    <input type="text" id="signature-input" readonly="" class="input input-ghost w-full text-center signature-font border-none bg-transparent">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal Confirmation -->
+    <div id="confirm-modal" class="fixed top-0 left-0 right-0 z-50 hidden p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-full bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="relative bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
+            <h3 class="text-xl font-bold text-slate-800 mb-4">Prêt pour l'envoi ?</h3>
+            <p class="text-slate-500 text-sm mb-8">Rapport envoyé à Alexandre.Ferland@filtrum.ca</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="sendDetailedEmail()" class="btn btn-primary w-full h-12 uppercase font-bold">Confirmer l'envoi</button>
+                <button onclick="closeModal()" class="btn btn-ghost w-full">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@latest/dist/flowbite.min.js"></script>
+    <script>
+        const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+        const tableBody = document.getElementById('table-body');
+        const summaryBody = document.getElementById('summary-body');
+        const respInput = document.getElementById('resp-name');
+        const signatureInput = document.getElementById('signature-input');
+        
+        document.addEventListener('DOMContentLoaded', () => { 
+            jours.forEach(j => addRow(j)); 
+            calculate(); 
+            respInput.addEventListener('input', () => { signatureInput.value = respInput.value; });
+        });
+
+        function handleProjectInput(input) {
+            const row = input.closest('tr');
+            const kmInput = row.querySelector('.km-val');
+            const hrInput = row.querySelector('.hr-val');
+            if (input.value.trim() !== "") {
+                if (kmInput.disabled) {
+                    kmInput.disabled = false; hrInput.disabled = false;
+                    kmInput.value = "0"; hrInput.value = "0";
+                }
+            } else {
+                kmInput.disabled = true; hrInput.disabled = true;
+                kmInput.value = ""; hrInput.value = "";
+            }
+            calculate();
+        }
+
+        function addRow(jour) {
+            const row = document.createElement('tr');
+            row.className = "hover:bg-slate-50 border-b border-gray-100";
+            row.innerHTML = `
+                <td class="font-black text-slate-400 text-[10px] uppercase">${jour}</td>
+                <td><input type="text" inputmode="numeric" maxlength="5" class="input input-sm input-bordered w-24 font-bold text-center border-gray-300" oninput="handleProjectInput(this)"></td>
+                <td><input type="number" inputmode="decimal" step="0.1" disabled class="input input-sm input-bordered w-full text-center border-gray-300 km-val" oninput="calculate()"></td>
+                <td><input type="number" inputmode="decimal" step="0.25" disabled class="input input-sm input-bordered w-full text-center border-gray-300 hr-val" oninput="calculate()"></td>
+                <td class="no-print text-center"><button type="button" onclick="insertAfter(this, '${jour}')" class="btn btn-primary btn-outline btn-circle btn-touch font-bold text-lg">+</button></td>
+            `;
+            tableBody.appendChild(row);
+        }
+
+        function insertAfter(btn, jour) {
+            const newRow = document.createElement('tr');
+            newRow.className = "hover:bg-slate-50 border-b border-gray-100";
+            newRow.innerHTML = `
+                <td class="font-black text-slate-400 text-[10px] uppercase">${jour}</td>
+                <td><input type="text" inputmode="numeric" maxlength="5" class="input input-sm input-bordered w-24 font-bold text-center border-gray-300" oninput="handleProjectInput(this)"></td>
+                <td><input type="number" inputmode="decimal" step="0.1" disabled class="input input-sm input-bordered w-full text-center border-gray-300 km-val" oninput="calculate()"></td>
+                <td><input type="number" inputmode="decimal" step="0.25" disabled class="input input-sm input-bordered w-full text-center border-gray-300 hr-val" oninput="calculate()"></td>
+                <td class="no-print text-center flex gap-1 justify-center">
+                    <button type="button" onclick="insertAfter(this, '${jour}')" class="btn btn-primary btn-outline btn-circle btn-touch font-bold text-lg">+</button>
+                    <button type="button" onclick="this.closest('tr').remove(); calculate();" class="btn btn-ghost text-error btn-circle btn-touch text-xl">×</button>
+                </td>
+            `;
+            btn.closest('tr').after(newRow);
+            calculate();
+        }
+
+        let summaryData = {};
+        function calculate() {
+            summaryData = {}; let gKm = 0, gHr = 0;
+            tableBody.querySelectorAll('tr').forEach(row => {
+                const idInput = row.querySelector('input[type="text"]');
+                const id = idInput.value.trim().toUpperCase() || "AUTRE";
+                const km = parseFloat(row.querySelector('.km-val').value) || 0;
+                const hr = parseFloat(row.querySelector('.hr-val').value) || 0;
+                if (!summaryData[id]) summaryData[id] = { km: 0, hr: 0 };
+                summaryData[id].km += km; summaryData[id].hr += hr; gKm += km; gHr += hr;
+            });
+            summaryBody.innerHTML = '';
+            for (const [id, totals] of Object.entries(summaryData)) {
+                if (id === "AUTRE" && totals.km === 0 && totals.hr === 0) continue;
+                summaryBody.innerHTML += `<tr><td class="font-bold text-slate-700">${id}</td><td class="text-center font-semibold">${totals.km.toFixed(1)}</td><td class="text-center font-semibold">${totals.hr.toFixed(2)}</td></tr>`;
+            }
+            document.getElementById('final-km').innerText = gKm.toFixed(1);
+            document.getElementById('final-hours').innerText = gHr.toFixed(2);
+        }
+
+        function checkAndConfirm() {
+            const camion = document.getElementById('camion-no').value.trim();
+            const resp = respInput.value.trim();
+            const week = document.getElementById('week-date').value.trim();
+            const insp = document.getElementById('insp-date').value.trim();
+            if (!camion || !resp || !week || !insp) { alert("Veuillez remplir les cases obligatoires."); return; }
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
+
+        function sendDetailedEmail() {
+            const name = respInput.value;
+            const camion = document.getElementById('camion-no').value;
+            const date = document.getElementById('week-date').value;
+            const inspDate = document.getElementById('insp-date').value;
+            const jauge = document.getElementById('check-jauge').checked ? "VALIDE" : "NON VÉRIFIÉ";
+            const trousse = document.getElementById('check-trousse').checked ? "OK" : "NON VÉRIFIÉ";
+
+            let bodyText = `RAPPORT DE FEUILLE DE CAMION - FILTRUM CONSTRUCTION\n\n`;
+            bodyText += `RESPONSABLE : ${name.toUpperCase()}\nCAMION      : ${camion.toUpperCase()}\nSEMAINE DU  : ${date}\n----------------------------------\n\nDÉTAIL PROJETS :\n`;
+            for (const [id, totals] of Object.entries(summaryData)) {
+                if (totals.km > 0 || totals.hr > 0) {
+                    bodyText += `PROJET ${id.padEnd(8)} : ${totals.km.toFixed(1).padStart(5)} KM | ${totals.hr.toFixed(2).padStart(5)} H\n`;
+                }
+            }
+            bodyText += `\nTOTAL HEBDO : ${document.getElementById('final-km').innerText} KM | ${document.getElementById('final-hours').innerText} H\n----------------------------------\n\nSÉCURITÉ :\n- Inspection extincteur : ${inspDate}\n- Jauge : ${jauge}\n- Trousse : ${trousse}\n\nSIGNATURE : ${name}`;
+
+            window.location.href = `mailto:Alexandre.Ferland@filtrum.ca?subject=Feuille de Camion - ${name} - Camion ${camion}&body=${encodeURIComponent(bodyText)}`;
+            closeModal();
+        }
+    </script>
+
+
+``` [DONE]
+</body></html>
