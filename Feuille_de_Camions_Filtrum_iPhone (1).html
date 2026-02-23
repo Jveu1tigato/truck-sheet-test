@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<title>Feuille de Camions - Filtrum Construction</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Dancing+Script:wght@700&display=swap');
+* { font-family: 'Inter', sans-serif; }
+.signature-font { font-family: 'Dancing Script', cursive; font-size: 2.2rem; color: #1e3a8a; }
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1e3a8a; color: white;
+  padding: 12px 24px; border-radius: 50px;
+  font-weight: 700; font-size: 13px; z-index: 9999;
+  transition: transform 0.3s ease; pointer-events: none; white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+.sec-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.f-input {
+  height: 46px; border-radius: 10px; border: 1.5px solid #cbd5e1;
+  background: #f8fafc; font-size: 15px; font-weight: 600;
+  padding: 0 12px; width: 100%; outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-appearance: none; box-sizing: border-box;
+}
+.f-input:focus { border-color: #3b82f6; background: #eff6ff; }
+.f-input::placeholder { color: #94a3b8; font-weight: 400; }
+.f-input.center { text-align: center; }
+.f-input.blue-border { border-color: #93c5fd; background: white; }
+.f-input.blue-border:focus { border-color: #3b82f6; background: #eff6ff; }
+.f-input:disabled { background: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; }
+.m-inp:disabled { background: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; }
+input[type="time"].f-input { font-size: 15px; font-weight: 700; padding: 0 8px; }
+
+.result-badge {
+  height: 46px; border-radius: 10px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+  color: white; font-weight: 800; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 640px) {
+  .mobile-card {
+    border: 1.5px solid #e2e8f0; border-radius: 14px;
+    margin-bottom: 10px; padding: 12px;
+    background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .mobile-card-day {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    color: #64748b; letter-spacing: 0.14em;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .m-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+  .m-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.07em; margin-bottom: 3px; }
+  .m-inp {
+    width: 100%; height: 44px; font-size: 14px; font-weight: 700; text-align: center;
+    border-radius: 8px; border: 1.5px solid #cbd5e1;
+    background: #f8fafc; outline: none; -webkit-appearance: none; box-sizing: border-box;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .m-inp:focus { border-color: #3b82f6; background: #eff6ff; }
+  input[type="time"].m-inp { font-size: 13px; padding: 0 2px; font-weight: 700; }
+}
+@media (min-width: 641px) {
+  .mobile-only { display: none !important; }
+  .col-day  { width: 88px; min-width: 80px; }
+  .col-proj { width: 100px; }
+  .col-km   { width: 80px; }
+  .col-time { width: 90px; }
+  .col-tot  { width: 78px; }
+}
+@media (max-width: 640px) { .desktop-only { display: none !important; } }
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; padding: 0 !important; }
+  .shadow-2xl { box-shadow: none !important; }
+}
+</style>
+</head>
+<body class="bg-slate-100 p-2 md:p-6 text-slate-900">
+
+<div id="toast"></div>
+
+<div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden border border-gray-200">
+
+  <!-- HEADER -->
+  <div class="bg-white border-b border-gray-100 p-4 md:p-5 flex flex-wrap justify-between items-center gap-3">
+    <div class="flex items-center gap-4">
+      <div class="flex flex-col items-center flex-shrink-0">
+        <svg width="68" height="44" viewBox="0 0 68 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0"  y="0"  width="42" height="18" rx="3.5" fill="#00AED9"/>
+          <rect x="50" y="0"  width="18" height="18" rx="3.5" fill="#002D62"/>
+          <rect x="0"  y="26" width="18" height="18" rx="3.5" fill="#00AED9"/>
+          <rect x="26" y="26" width="42" height="18" rx="3.5" fill="#002D62"/>
+        </svg>
+        <span class="text-[14px] font-black tracking-tight text-[#002D62] mt-1 leading-none">FILTRUM</span>
+        <span class="text-[6px] font-semibold tracking-[0.3em] text-[#002D62] uppercase mt-0.5">CONSTRUCTION</span>
+      </div>
+      <h1 class="text-base md:text-lg font-bold uppercase text-slate-600 tracking-wide">Feuille de Camions</h1>
+    </div>
+    <div class="flex gap-2 no-print flex-wrap items-center">
+      <button onclick="saveForm()" class="btn btn-outline btn-xs md:btn-sm gap-1 text-blue-700 border-blue-300">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+        Sauvegarder
+      </button>
+      <button onclick="clearSave()" class="btn btn-ghost btn-xs md:btn-sm text-red-400">Effacer</button>
+      <button onclick="window.print()" class="btn btn-ghost btn-xs md:btn-sm gap-1">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        Imprimer
+      </button>
+      <button onclick="checkAndConfirm()" class="btn btn-primary btn-xs md:btn-sm px-5 shadow uppercase font-bold">Envoyer</button>
+    </div>
+  </div>
+
+  <form id="timeForm" class="p-4 md:p-6 space-y-6">
+
+    <!-- IDENTIFICATION + ODOMÈTRE -->
+    <div class="rounded-2xl border border-blue-200 bg-blue-50/40 p-4 space-y-4">
+      <p class="sec-label text-blue-700">Identification &amp; Odomètre *</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="sec-label text-slate-500 block mb-1.5">No Camion *</label>
+          <input type="text" id="camion-no" placeholder="Ex: C-502" style="font-size:16px" class="f-input blue-border">
+        </div>
+        <div>
+          <label class="sec-label text-slate-500 block mb-1.5">Responsable *</label>
+          <input type="text" id="resp-name" placeholder="Prénom Nom" style="font-size:16px" class="f-input blue-border">
+        </div>
+        <div>
+          <label class="sec-label text-slate-500 block mb-1.5">Semaine finissant le *</label>
+          <input type="date" id="week-date" style="font-size:16px" class="f-input blue-border" placeholder="aaaa-mm-jj">
+        </div>
+      </div>
+      <div class="border-t border-blue-100 pt-3 grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+        <div>
+          <label class="sec-label text-blue-600 block mb-1.5">Odomètre DÉBUT *</label>
+          <input type="number" id="odo-debut" placeholder="km" inputmode="numeric" style="font-size:16px"
+            class="f-input blue-border center" oninput="calcOdo()">
+        </div>
+        <div>
+          <label class="sec-label text-blue-600 block mb-1.5">Odomètre FIN *</label>
+          <input type="number" id="odo-fin" placeholder="km" inputmode="numeric" style="font-size:16px"
+            class="f-input blue-border center" oninput="calcOdo()">
+        </div>
+        <div class="md:col-span-2">
+          <label class="sec-label text-blue-600 block mb-1.5">Différence</label>
+          <div class="result-badge" id="odo-diff-badge">— km</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLEAU DESKTOP -->
+    <div class="desktop-only overflow-x-auto border border-gray-200 rounded-2xl bg-white shadow-sm">
+      <table class="table w-full text-sm">
+        <thead class="bg-slate-800 text-white">
+          <tr class="text-[10px] uppercase tracking-widest">
+            <th class="col-day font-semibold py-3 px-3">Jour</th>
+            <th class="col-proj font-semibold px-2"># Projet</th>
+            <th class="col-km text-center font-semibold px-2">KM</th>
+            <th class="col-time text-center font-semibold px-2">Début</th>
+            <th class="col-time text-center font-semibold px-2">Fin</th>
+            <th class="col-tot text-center font-semibold px-2">Total h</th>
+            <th class="w-16 no-print text-center font-semibold">+</th>
+          </tr>
+        </thead>
+        <tbody id="table-body-desktop"></tbody>
+      </table>
+    </div>
+
+    <!-- CARTES MOBILE -->
+    <div class="mobile-only" id="mobile-cards"></div>
+
+    <!-- RÉPARTITION -->
+    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div class="flex items-center justify-between mb-3">
+        <p class="sec-label text-slate-400">Répartition (optionnel)</p>
+        <button type="button" onclick="addRepartitionRow()"
+          class="no-print flex items-center gap-1.5 bg-blue-600 text-white text-xs font-bold uppercase tracking-wide px-3 h-8 rounded-lg shadow">
+          + Ajouter
+        </button>
+      </div>
+      <div class="hidden sm:grid gap-2 mb-1 px-1" style="grid-template-columns:1fr 70px 80px 36px">
+        <span class="sec-label text-slate-400">Description</span>
+        <span class="sec-label text-slate-400 text-center">%</span>
+        <span class="sec-label text-slate-400 text-center">KM</span>
+        <span></span>
+      </div>
+      <div class="space-y-2" id="repartition-rows"></div>
+      <div class="mt-4 space-y-1.5">
+        <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+          <div id="rept-bar" class="h-2 rounded-full transition-all duration-300 bg-blue-500" style="width:0%"></div>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-slate-400">0 %</span>
+          <div class="flex items-center gap-2">
+            <span class="sec-label text-slate-400">Total :</span>
+            <span id="rept-total" class="font-black text-sm text-slate-700">0 %</span>
+          </div>
+          <span class="text-xs text-slate-400">100 %</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RÉSUMÉ + SÉCURITÉ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+        <div class="bg-slate-100 px-4 py-2.5 border-b">
+          <p class="sec-label text-slate-500">Résumé hebdomadaire</p>
+        </div>
+        <table class="table table-compact w-full text-sm">
+          <thead>
+            <tr class="text-[9px] uppercase text-slate-400">
+              <th class="font-semibold py-2">Projet</th>
+              <th class="text-center font-semibold">KM</th>
+              <th class="text-center font-semibold">Heures</th>
+            </tr>
+          </thead>
+          <tbody id="summary-body"></tbody>
+          <tfoot class="border-t-2 border-slate-200">
+            <tr class="bg-slate-50">
+              <td class="text-right pr-2 text-xs font-black uppercase text-slate-400 py-2">Total</td>
+              <td class="text-center font-black text-blue-600 py-2" id="final-km">—</td>
+              <td class="text-center font-black text-indigo-600 py-2" id="final-hours">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="bg-blue-50 p-4 rounded-2xl border border-blue-200 space-y-4">
+        <p class="sec-label text-blue-700">Inspection Sécurité</p>
+        <div>
+          <label class="sec-label text-slate-500 block mb-1.5">Dernière inspection *</label>
+          <input type="date" id="insp-date" style="font-size:16px" class="f-input blue-border bg-white" placeholder="aaaa-mm-jj">
+        </div>
+        <label class="flex items-center gap-3 cursor-pointer bg-white rounded-xl p-3 border border-blue-100">
+          <input type="checkbox" id="check-jauge" class="checkbox checkbox-primary checkbox-sm flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="text-blue-600 flex-shrink-0">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 12L8.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+              <path d="M6 17a7 7 0 0 1 12 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M8.5 15.5L7 17" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span class="text-sm font-semibold text-slate-700">Jauge de l'extincteur OK</span>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 cursor-pointer bg-white rounded-xl p-3 border border-blue-100">
+          <input type="checkbox" id="check-trousse" class="checkbox checkbox-primary checkbox-sm flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="text-red-500 flex-shrink-0">
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+            <span class="text-sm font-semibold text-slate-700">Trousse de premiers soins OK</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="pt-6 flex justify-end">
+      <div class="w-full md:w-72 border-t-2 border-slate-800 pt-3 text-center">
+        <p class="sec-label text-slate-400 mb-1">Signature du responsable</p>
+        <input type="text" id="signature-input" readonly
+          class="input input-ghost w-full text-center signature-font border-none bg-transparent h-14">
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- MODAL SAUVEGARDE -->
+<div id="save-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-xs w-full text-center">
+    <div class="text-4xl mb-3">💾</div>
+    <h3 class="text-lg font-bold text-slate-800 mb-2">Sauvegardé !</h3>
+    <p class="text-slate-500 text-sm mb-5">Les données sont enregistrées dans ce navigateur et seront restaurées à la prochaine ouverture.</p>
+    <button onclick="document.getElementById('save-modal').classList.add('hidden')" class="btn btn-primary w-full">OK</button>
+  </div>
+</div>
+
+<!-- MODAL ENVOI -->
+<div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl p-7 text-center max-w-xs w-full">
+    <h3 class="text-lg font-bold text-slate-800 mb-2">Prêt pour l'envoi ?</h3>
+    <p class="text-slate-500 text-sm mb-6">Rapport envoyé à <strong id="email-display"></strong></p>
+    <div class="flex flex-col gap-2">
+      <button onclick="sendDetailedEmail()" class="btn btn-primary w-full uppercase font-bold">Confirmer l'envoi</button>
+      <button onclick="closeModal()" class="btn btn-ghost w-full">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var STORAGE_KEY = 'filtrum_camion_v5';
+var DEST = ['camion','@','filtrum','.','ca'].join('');
+document.getElementById('email-display').textContent = DEST;
+
+var jours = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+var respInput = document.getElementById('resp-name');
+var sigInput  = document.getElementById('signature-input');
+
+window.addEventListener('DOMContentLoaded', function() {
+  jours.forEach(function(j) { addDesktopRow(j); addMobileCard(j); });
+  calculate();
+  respInput.addEventListener('input', function() { sigInput.value = respInput.value; });
+  try {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) { restoreForm(JSON.parse(saved)); showToast('Données restaurées'); }
+  } catch(e) {}
+});
+
+// ── ODOMÈTRE ──────────────────────────────────────
+function calcOdo() {
+  var d = parseFloat(document.getElementById('odo-debut').value) || 0;
+  var f = parseFloat(document.getElementById('odo-fin').value)   || 0;
+  var el = document.getElementById('odo-diff-badge');
+  if (d === 0 && f === 0)  el.textContent = '— km';
+  else if (f < d)          el.textContent = '⚠️ Vérifier';
+  else                     el.textContent = (f - d).toFixed(0) + ' km';
+}
+
+// ── HEURES ────────────────────────────────────────
+function timeToMin(t) {
+  if (!t || t.indexOf(':') === -1) return null;
+  var p = t.split(':');
+  return parseInt(p[0]) * 60 + parseInt(p[1]);
+}
+function minToTime(m) {
+  if (m == null || m < 0) return '';
+  var h = Math.floor(m / 60), mn = m % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (mn < 10 ? '0' : '') + mn;
+}
+function calcRowHours(totEl, debEl, finEl) {
+  var s = timeToMin(debEl.value), e = timeToMin(finEl.value);
+  if (s === null || e === null) { totEl.value = ''; return; }
+  var diff = e - s;
+  totEl.value = diff >= 0 ? minToTime(diff) : '⚠️';
+  calculate();
+}
+
+// ── DESKTOP ROWS ──────────────────────────────────
+function makeDesktopRow(jour, deletable) {
+  var row = document.createElement('tr');
+  row.className = 'hover:bg-slate-50 border-b border-gray-100';
+  row.dataset.jour = jour;
+  var delBtn = deletable
+    ? '<button type="button" onclick="this.closest(\'tr\').remove();calculate();" class="w-8 h-8 rounded-full bg-red-50 text-red-400 font-bold text-xl flex items-center justify-center">×</button>'
+    : '';
+  row.innerHTML =
+    '<td class="col-day text-[10px] font-bold uppercase text-slate-500 tracking-wide py-2 px-3 whitespace-nowrap">' + jour + '</td>' +
+    '<td class="py-1.5 px-2"><input type="text" maxlength="6" style="font-size:15px" class="f-input center proj-val" oninput="handleProjDesktop(this)" placeholder="—"></td>' +
+    '<td class="py-1.5 px-2"><input type="number" inputmode="decimal" step="0.1" style="font-size:15px" class="f-input center km-val" oninput="calculate()" disabled></td>' +
+    '<td class="py-1.5 px-2"><input type="time" style="font-size:15px" class="f-input center debut-val" oninput="calcRowDesktop(this)" disabled></td>' +
+    '<td class="py-1.5 px-2"><input type="time" style="font-size:15px" class="f-input center fin-val" oninput="calcRowDesktop(this)" disabled></td>' +
+    '<td class="py-1.5 px-2"><input type="text" readonly style="font-size:15px" class="f-input center tot-val bg-slate-50 text-slate-600 font-bold cursor-default" placeholder="—"></td>' +
+    '<td class="no-print text-center py-1.5 px-2"><div class="flex gap-1 justify-center">' +
+      '<button type="button" onclick="insertDesktopAfter(this,\'' + jour + '\')" class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-base flex items-center justify-center">+</button>' +
+      delBtn +
+    '</div></td>';
+  return row;
+}
+function addDesktopRow(jour) {
+  document.getElementById('table-body-desktop').appendChild(makeDesktopRow(jour, false));
+}
+function insertDesktopAfter(btn, jour) {
+  btn.closest('tr').after(makeDesktopRow(jour, true)); calculate();
+}
+function calcRowDesktop(input) {
+  var row = input.closest('tr');
+  calcRowHours(row.querySelector('.tot-val'), row.querySelector('.debut-val'), row.querySelector('.fin-val'));
+}
+function handleProjDesktop(input) {
+  var row = input.closest('tr');
+  var locked = input.value.trim() === '';
+  row.querySelector('.km-val').disabled    = locked;
+  row.querySelector('.debut-val').disabled = locked;
+  row.querySelector('.fin-val').disabled   = locked;
+  if (locked) {
+    row.querySelector('.km-val').value    = '';
+    row.querySelector('.debut-val').value = '';
+    row.querySelector('.fin-val').value   = '';
+    row.querySelector('.tot-val').value   = '';
+  }
+  calculate();
+}
+function handleProjMobile(input) {
+  var card = input.closest('.mobile-card');
+  var locked = input.value.trim() === '';
+  card.querySelector('.km-val').disabled    = locked;
+  card.querySelector('.debut-val').disabled = locked;
+  card.querySelector('.fin-val').disabled   = locked;
+  if (locked) {
+    card.querySelector('.km-val').value    = '';
+    card.querySelector('.debut-val').value = '';
+    card.querySelector('.fin-val').value   = '';
+    card.querySelector('.tot-val').textContent = '—';
+  }
+  calculate();
+}
+
+// ── MOBILE CARDS ──────────────────────────────────
+function buildCardHTML(jour, deletable) {
+  var delBtn = deletable
+    ? '<button type="button" onclick="this.closest(\'.mobile-card\').remove();calculate();" class="w-9 h-9 rounded-full bg-red-50 text-red-400 font-bold text-xl flex items-center justify-center">×</button>'
+    : '';
+  return '<div class="mobile-card-day">' + jour + '</div>' +
+    '<div class="m-grid-4 mb-2">' +
+      '<div><div class="m-lbl"># Projet</div><input type="text" maxlength="6" class="m-inp proj-val" style="font-size:14px" oninput="handleProjMobile(this)" placeholder="—"></div>' +
+      '<div><div class="m-lbl">KM</div><input type="number" inputmode="decimal" step="0.1" class="m-inp km-val" style="font-size:14px" oninput="calculate()" disabled></div>' +
+      '<div><div class="m-lbl">Début</div><input type="time" class="m-inp debut-val" oninput="calcRowMobile(this)" disabled></div>' +
+      '<div><div class="m-lbl">Fin</div><input type="time" class="m-inp fin-val" oninput="calcRowMobile(this)" disabled></div>' +
+    '</div>' +
+    '<div class="flex items-center justify-between">' +
+      '<div class="flex items-center gap-2"><span class="m-lbl">Total :</span><span class="tot-val text-sm font-bold text-slate-600">—</span></div>' +
+      '<div class="flex gap-2 no-print">' +
+        '<button type="button" onclick="insertMobileAfter(this,\'' + jour + '\')" class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xl flex items-center justify-center shadow">+</button>' +
+        delBtn +
+      '</div>' +
+    '</div>';
+}
+function addMobileCard(jour) {
+  var c = document.createElement('div');
+  c.className = 'mobile-card'; c.dataset.jour = jour;
+  c.innerHTML = buildCardHTML(jour, false);
+  document.getElementById('mobile-cards').appendChild(c);
+}
+function insertMobileAfter(btn, jour) {
+  var c = document.createElement('div');
+  c.className = 'mobile-card'; c.dataset.jour = jour;
+  c.innerHTML = buildCardHTML(jour, true);
+  btn.closest('.mobile-card').after(c); calculate();
+}
+function calcRowMobile(input) {
+  var card = input.closest('.mobile-card');
+  var s = timeToMin(card.querySelector('.debut-val').value);
+  var e = timeToMin(card.querySelector('.fin-val').value);
+  var el = card.querySelector('.tot-val');
+  if (s === null || e === null) { el.textContent = '—'; }
+  else { var diff = e - s; el.textContent = diff >= 0 ? minToTime(diff) + ' h' : '⚠️'; }
+  calculate();
+}
+
+// ── RÉPARTITION ───────────────────────────────────
+function addRepartitionRow(descVal, pctVal) {
+  var container = document.getElementById('repartition-rows');
+  var div = document.createElement('div');
+  div.className = 'repartition-row grid gap-2 items-center';
+  div.style.gridTemplateColumns = '1fr 70px 80px 36px';
+  div.innerHTML =
+    '<input type="text" placeholder="Description du poste..." style="font-size:15px" class="f-input rept-desc">' +
+    '<input type="number" placeholder="%" inputmode="decimal" min="0" max="100" style="font-size:15px" class="f-input center rept-pct" oninput="calcRepartition()">' +
+    '<div class="f-input center rept-km bg-slate-100 text-slate-500 font-bold flex items-center justify-center text-sm">—</div>' +
+    '<button type="button" onclick="this.closest(\'.repartition-row\').remove();calcRepartition();" class="flex-shrink-0 w-9 h-9 rounded-full bg-red-50 text-red-400 font-bold text-xl flex items-center justify-center">×</button>';
+  container.appendChild(div);
+  if (descVal) div.querySelector('.rept-desc').value = descVal;
+  if (pctVal)  div.querySelector('.rept-pct').value  = pctVal;
+  calcRepartition();
+}
+function calcRepartition() {
+  var total = 0;
+  var totalKm = parseFloat(document.getElementById('final-km').textContent) || 0;
+  document.querySelectorAll('.rept-pct').forEach(function(i) { total += parseFloat(i.value) || 0; });
+  // Update KM display per row
+  document.querySelectorAll('.repartition-row').forEach(function(row) {
+    var pct = parseFloat(row.querySelector('.rept-pct').value) || 0;
+    var kmEl = row.querySelector('.rept-km');
+    if (kmEl) {
+      if (totalKm > 0 && pct > 0) {
+        kmEl.textContent = (totalKm * pct / 100).toFixed(1) + ' km';
+        kmEl.classList.remove('text-slate-400');
+        kmEl.classList.add('text-blue-700');
+      } else {
+        kmEl.textContent = '—';
+        kmEl.classList.add('text-slate-400');
+        kmEl.classList.remove('text-blue-700');
+      }
+    }
+  });
+  var el  = document.getElementById('rept-total');
+  var bar = document.getElementById('rept-bar');
+  el.textContent = total.toFixed(1) + ' %';
+  bar.style.width = Math.min(total, 100) + '%';
+  if (Math.abs(total - 100) < 0.01) {
+    el.className = 'font-black text-sm text-green-600';
+    bar.className = 'h-2 rounded-full transition-all duration-300 bg-green-500';
+  } else if (total > 100) {
+    el.className = 'font-black text-sm text-red-500';
+    bar.className = 'h-2 rounded-full transition-all duration-300 bg-red-500';
+  } else {
+    el.className = 'font-black text-sm text-slate-700';
+    bar.className = 'h-2 rounded-full transition-all duration-300 bg-blue-500';
+  }
+}
+
+// ── CALCULATE ─────────────────────────────────────
+var summaryData = {};
+function calculate() {
+  summaryData = {}; var gKm = 0, gMin = 0;
+  function add(projEl, kmEl, totEl) {
+    var id = ((projEl && projEl.value) || '').trim().toUpperCase() || 'AUTRE';
+    var km = parseFloat((kmEl && kmEl.value) || 0) || 0;
+    var totStr = totEl ? (totEl.value !== undefined ? totEl.value : totEl.textContent) : '';
+    totStr = totStr.replace(' h', '');
+    var min = timeToMin(totStr) || 0;
+    if (!summaryData[id]) summaryData[id] = { km: 0, min: 0 };
+    summaryData[id].km += km; summaryData[id].min += min;
+    gKm += km; gMin += min;
+  }
+  document.querySelectorAll('#table-body-desktop tr').forEach(function(r) {
+    add(r.querySelector('.proj-val'), r.querySelector('.km-val'), r.querySelector('.tot-val'));
+  });
+  document.querySelectorAll('#mobile-cards .mobile-card').forEach(function(c) {
+    add(c.querySelector('.proj-val'), c.querySelector('.km-val'), c.querySelector('.tot-val'));
+  });
+  var sb = document.getElementById('summary-body');
+  sb.innerHTML = '';
+  for (var id in summaryData) {
+    var t = summaryData[id];
+    if (id === 'AUTRE' && t.km === 0 && t.min === 0) continue;
+    sb.innerHTML += '<tr>' +
+      '<td class="font-bold text-slate-700 py-1.5 text-sm">' + id + '</td>' +
+      '<td class="text-center text-sm py-1.5">' + (t.km > 0 ? t.km.toFixed(1) : '—') + '</td>' +
+      '<td class="text-center text-sm py-1.5">' + (t.min > 0 ? minToTime(t.min) : '—') + '</td>' +
+      '</tr>';
+  }
+  document.getElementById('final-km').textContent    = gKm > 0 ? gKm.toFixed(1) : '—';
+  document.getElementById('final-hours').textContent = gMin > 0 ? minToTime(gMin) : '—';
+  calcRepartition();
+}
+
+// ── SAVE / RESTORE ────────────────────────────────
+function saveForm() {
+  var desktop = [], mobile = [], repartition = [];
+  document.querySelectorAll('#table-body-desktop tr').forEach(function(r) {
+    desktop.push({ jour: r.dataset.jour, proj: r.querySelector('.proj-val').value, km: r.querySelector('.km-val').value, deb: r.querySelector('.debut-val').value, fin: r.querySelector('.fin-val').value });
+  });
+  document.querySelectorAll('#mobile-cards .mobile-card').forEach(function(c) {
+    mobile.push({ jour: c.dataset.jour, proj: c.querySelector('.proj-val').value, km: c.querySelector('.km-val').value, deb: c.querySelector('.debut-val').value, fin: c.querySelector('.fin-val').value });
+  });
+  document.querySelectorAll('.repartition-row').forEach(function(row) {
+    repartition.push({ desc: row.querySelector('.rept-desc').value, pct: row.querySelector('.rept-pct').value });
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    camion: document.getElementById('camion-no').value,
+    resp:   respInput.value,
+    week:   document.getElementById('week-date').value,
+    odoD:   document.getElementById('odo-debut').value,
+    odoF:   document.getElementById('odo-fin').value,
+    insp:   document.getElementById('insp-date').value,
+    jauge:  document.getElementById('check-jauge').checked,
+    trousse:document.getElementById('check-trousse').checked,
+    desktop: desktop, mobile: mobile, repartition: repartition,
+    savedAt: new Date().toISOString()
+  }));
+  document.getElementById('save-modal').classList.remove('hidden');
+}
+function clearSave() {
+  if (confirm('Effacer toutes les données sauvegardées ?')) {
+    localStorage.removeItem(STORAGE_KEY); showToast('Sauvegarde effacée');
+  }
+}
+function groupByJour(rows) {
+  var order = [], data = {};
+  rows.forEach(function(r) {
+    if (order.indexOf(r.jour) === -1) order.push(r.jour);
+    if (!data[r.jour]) data[r.jour] = [];
+    data[r.jour].push(r);
+  });
+  return { order: order, data: data };
+}
+function restoreForm(d) {
+  if (!d) return;
+  function sv(id, v) { var el = document.getElementById(id); if (el && v != null) el.value = v; }
+  sv('camion-no', d.camion); sv('resp-name', d.resp); sv('week-date', d.week);
+  sv('odo-debut', d.odoD); sv('odo-fin', d.odoF); sv('insp-date', d.insp);
+  document.getElementById('check-jauge').checked   = !!d.jauge;
+  document.getElementById('check-trousse').checked = !!d.trousse;
+  sigInput.value = d.resp || '';
+  if (d.desktop && d.desktop.length) {
+    document.getElementById('table-body-desktop').innerHTML = '';
+    var grp = groupByJour(d.desktop);
+    grp.order.forEach(function(jour) {
+      grp.data[jour].forEach(function(rd, i) {
+        var row = makeDesktopRow(jour, i > 0);
+        document.getElementById('table-body-desktop').appendChild(row);
+        row.querySelector('.proj-val').value  = rd.proj || '';
+        if (rd.proj) {
+          row.querySelector('.km-val').disabled    = false;
+          row.querySelector('.debut-val').disabled = false;
+          row.querySelector('.fin-val').disabled   = false;
+        }
+        row.querySelector('.km-val').value    = rd.km   || '';
+        row.querySelector('.debut-val').value = rd.deb  || '';
+        row.querySelector('.fin-val').value   = rd.fin  || '';
+        calcRowHours(row.querySelector('.tot-val'), row.querySelector('.debut-val'), row.querySelector('.fin-val'));
+      });
+    });
+  }
+  if (d.mobile && d.mobile.length) {
+    document.getElementById('mobile-cards').innerHTML = '';
+    var grp2 = groupByJour(d.mobile);
+    grp2.order.forEach(function(jour) {
+      grp2.data[jour].forEach(function(cd, i) {
+        var card = document.createElement('div');
+        card.className = 'mobile-card'; card.dataset.jour = jour;
+        card.innerHTML = buildCardHTML(jour, i > 0);
+        document.getElementById('mobile-cards').appendChild(card);
+        card.querySelector('.proj-val').value  = cd.proj || '';
+        if (cd.proj) {
+          card.querySelector('.km-val').disabled    = false;
+          card.querySelector('.debut-val').disabled = false;
+          card.querySelector('.fin-val').disabled   = false;
+        }
+        card.querySelector('.km-val').value    = cd.km   || '';
+        card.querySelector('.debut-val').value = cd.deb  || '';
+        card.querySelector('.fin-val').value   = cd.fin  || '';
+        calcRowMobile(card.querySelector('.debut-val'));
+      });
+    });
+  }
+  if (d.repartition && d.repartition.length) {
+    document.getElementById('repartition-rows').innerHTML = '';
+    d.repartition.forEach(function(r) { addRepartitionRow(r.desc, r.pct); });
+  }
+  calcOdo(); calculate();
+}
+
+// ── TOAST ─────────────────────────────────────────
+function showToast(msg, ms) {
+  ms = ms || 3000;
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, ms);
+}
+
+// ── ENVOI ─────────────────────────────────────────
+function checkAndConfirm() {
+  var c  = document.getElementById('camion-no').value.trim();
+  var r  = respInput.value.trim();
+  var w  = document.getElementById('week-date').value.trim();
+  var i  = document.getElementById('insp-date').value.trim();
+  var od = document.getElementById('odo-debut').value.trim();
+  var of = document.getElementById('odo-fin').value.trim();
+  if (!c || !r || !w || !i || !od || !of) {
+    alert('Veuillez remplir tous les champs obligatoires : No camion, responsable, semaine, odomètres, inspection.'); return;
+  }
+  document.getElementById('confirm-modal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
+function sendDetailedEmail() {
+  var name    = respInput.value;
+  var camion  = document.getElementById('camion-no').value;
+  var date    = document.getElementById('week-date').value;
+  var inspD   = document.getElementById('insp-date').value;
+  var jauge   = document.getElementById('check-jauge').checked   ? 'OK' : 'NON VÉRIFIÉ';
+  var trousse = document.getElementById('check-trousse').checked ? 'OK' : 'NON VÉRIFIÉ';
+  var odoD    = document.getElementById('odo-debut').value || '—';
+  var odoF    = document.getElementById('odo-fin').value   || '—';
+  var diff    = document.getElementById('odo-diff-badge').textContent;
+  var body = 'RAPPORT FEUILLE DE CAMION - FILTRUM CONSTRUCTION\n\n';
+  body += 'RESPONSABLE : ' + name.toUpperCase() + '\nCAMION      : ' + camion.toUpperCase() + '\nSEMAINE DU  : ' + date + '\n';
+  body += '----------------------------------\nODOMÈTRE :\n  Début : ' + odoD + ' km\n  Fin   : ' + odoF + ' km\n  Écart : ' + diff + '\n\nDÉTAIL PROJETS :\n';
+  for (var id in summaryData) {
+    var t = summaryData[id];
+    if (t.km > 0 || t.min > 0)
+      body += '  PROJET ' + id + ' : ' + t.km.toFixed(1) + ' KM  |  ' + minToTime(t.min) + ' H\n';
+  }
+  body += '\nTOTAL : ' + document.getElementById('final-km').textContent + ' KM  |  ' + document.getElementById('final-hours').textContent + ' H\n';
+  var repts = [];
+  document.querySelectorAll('.repartition-row').forEach(function(row) {
+    var desc = row.querySelector('.rept-desc').value;
+    var pct  = row.querySelector('.rept-pct').value;
+    if (desc || pct) {
+      var totalKmEmail = parseFloat(document.getElementById('final-km').textContent) || 0;
+      var pctNum = parseFloat(pct) || 0;
+      var kmCalc = totalKmEmail > 0 && pctNum > 0 ? ' = ' + (totalKmEmail * pctNum / 100).toFixed(1) + ' km' : '';
+      repts.push('  ' + (desc || '—') + ' : ' + (pct || '0') + ' %' + kmCalc);
+    }
+  });
+  if (repts.length) body += '\nRÉPARTITION :\n' + repts.join('\n') + '\n';
+  body += '----------------------------------\nSÉCURITÉ :\n  Inspection : ' + inspD + '\n  Jauge extincteur : ' + jauge + '\n  Trousse premiers soins : ' + trousse + '\n\nSIGNATURE : ' + name;
+  var subj = 'Feuille de Camion - ' + name + ' - Camion ' + camion;
+  window.location.href = 'mailto:' + DEST + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+  closeModal();
+}
+</script>
+</body>
+</html>
