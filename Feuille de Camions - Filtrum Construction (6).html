@@ -1,258 +1,666 @@
-<html lang="fr" data-theme="light"><head>
-    <meta charset="UTF-8">
-    <!-- Empêche le zoom automatique sur iPad lors de la saisie -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Feuille de Camions - Filtrum Construction</title>
-    
-    <!-- Tailwind, DaisyUI et Flowbite CDNs -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/flowbite@latest/dist/flowbite.min.css" rel="stylesheet">
-    
-    <style>
-        /* Correction Datepicker : Fond blanc opaque et bien visible sur iPad */
-        .datepicker { background-color: #ffffff !important; opacity: 1 !important; z-index: 9999 !important; border: 1px solid #d1d5db !important; }
-        .datepicker-picker { background-color: #ffffff !important; }
-        
-        /* Signature cursive */
-        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
-        .signature-font { font-family: 'Dancing Script', cursive; font-size: 2.5rem; color: #1e3a8a; }
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<title>Feuille de Camions - Filtrum Construction</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Dancing+Script:wght@700&display=swap');
+* { font-family: 'Inter', sans-serif; }
+.signature-font { font-family: 'Dancing Script', cursive; font-size: 2.2rem; color: #1e3a8a; }
 
-        /* Boutons + et x agrandis pour les doigts (iPad) */
-        .btn-touch {
-            min-height: 44px !important;
-            min-width: 44px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
 
-        /* Désactivation des flèches sur les inputs number pour un look plus propre */
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1e3a8a; color: white;
+  padding: 12px 24px; border-radius: 50px;
+  font-weight: 700; font-size: 13px; z-index: 9999;
+  transition: transform 0.3s ease; pointer-events: none; white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
 
-        @media print { .no-print { display: none !important; } }
-    </style>
+.sec-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.f-input {
+  height: 46px; border-radius: 10px; border: 1.5px solid #cbd5e1;
+  background: #f8fafc; font-size: 15px; font-weight: 600;
+  padding: 0 12px; width: 100%; outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-appearance: none; box-sizing: border-box;
+}
+.f-input:focus { border-color: #3b82f6; background: #eff6ff; }
+.f-input::placeholder { color: #94a3b8; font-weight: 400; }
+.f-input.center { text-align: center; }
+.f-input.blue-border { border-color: #93c5fd; background: white; }
+.f-input.blue-border:focus { border-color: #3b82f6; background: #eff6ff; }
+.f-input:disabled { background: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; }
+.m-inp:disabled { background: #f1f5f9 !important; color: #cbd5e1 !important; border-color: #e2e8f0 !important; cursor: not-allowed; }
+input[type="time"].f-input { font-size: 15px; font-weight: 700; padding: 0 8px; }
+
+.result-badge {
+  height: 46px; border-radius: 10px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+  color: white; font-weight: 800; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 640px) {
+  .mobile-card {
+    border: 1.5px solid #e2e8f0; border-radius: 14px;
+    margin-bottom: 10px; padding: 12px;
+    background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .mobile-card-day {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    color: #64748b; letter-spacing: 0.14em;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .m-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+  .m-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.07em; margin-bottom: 3px; }
+  .m-inp {
+    width: 100%; height: 44px; font-size: 14px; font-weight: 700; text-align: center;
+    border-radius: 8px; border: 1.5px solid #cbd5e1;
+    background: #f8fafc; outline: none; -webkit-appearance: none; box-sizing: border-box;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .m-inp:focus { border-color: #3b82f6; background: #eff6ff; }
+  input[type="time"].m-inp { font-size: 13px; padding: 0 2px; font-weight: 700; }
+}
+@media (min-width: 641px) {
+  .mobile-only { display: none !important; }
+  .col-day  { width: 88px; min-width: 80px; }
+  .col-proj { width: 100px; }
+  .col-km   { width: 80px; }
+  .col-time { width: 90px; }
+  .col-tot  { width: 78px; }
+}
+@media (max-width: 640px) { .desktop-only { display: none !important; } }
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; padding: 0 !important; }
+  .shadow-2xl { box-shadow: none !important; }
+}
+</style>
 </head>
 <body class="bg-slate-100 p-2 md:p-6 text-slate-900">
 
-    <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden border border-gray-200">
-        
-        <!-- Header -->
-        <div class="bg-white border-b border-gray-100 p-6 flex flex-wrap justify-between items-center gap-6">
-            <div class="flex items-center gap-6">
-                <!-- Logo FILTRUM CONSTRUCTION (SVG) -->
-                <div class="flex flex-col items-center">
-                    <svg width="60" height="35" viewBox="0 0 100 70" fill="none">
-                        <path d="M0 12C0 5.37258 5.37258 0 12 0H42V25H12C5.37258 25 0 19.6274 0 12Z" fill="#00AED9"></path>
-                        <path d="M58 0H88C94.6274 0 100 5.37258 100 12V25H70C63.3726 25 58 19.6274 58 12V0Z" fill="#002D62"></path>
-                        <path d="M0 35H30V60H12C5.37258 60 0 54.6274 0 48V35Z" fill="#00AED9"></path>
-                        <path d="M40 35H88C94.6274 35 100 40.3726 100 47C100 53.6274 94.6274 59 88 59H40V35Z" fill="#002D62"></path>
-                    </svg>
-                    <span class="text-lg font-black tracking-tighter text-[#002D62] mt-1">FILTRUM</span>
-                    <span class="text-[7px] font-bold tracking-[0.35em] text-[#002D62] uppercase">Construction</span>
-                </div>
-                <h1 class="text-xl font-bold uppercase text-slate-700">Feuille de Camions</h1>
-            </div>
-            <div class="flex gap-2 no-print">
-                <button onclick="window.print()" class="btn btn-ghost btn-sm">PDF</button>
-                <button onclick="checkAndConfirm()" class="btn btn-primary btn-sm px-10 shadow-lg uppercase font-bold">Envoyer</button>
-            </div>
+<div id="toast"></div>
+
+<div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden border border-gray-200">
+
+  <!-- HEADER -->
+  <div class="bg-white border-b border-gray-100 p-4 md:p-5 flex flex-wrap justify-between items-center gap-3">
+    <div class="flex items-center gap-4">
+      <div class="flex-shrink-0">
+        <img src="data:image/png;base64,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" alt="Filtrum Construction" style="height:56px;width:auto;">
+      </div>
+      <h1 class="text-base md:text-lg font-bold uppercase text-slate-600 tracking-wide">Feuille de Camions</h1>
+    </div>
+    <div class="flex gap-2 no-print flex-wrap items-center">
+      <button onclick="saveForm()" class="btn btn-outline btn-xs md:btn-sm gap-1 text-blue-700 border-blue-300">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+        Sauvegarder
+      </button>
+      <button onclick="clearSave()" class="btn btn-ghost btn-xs md:btn-sm text-red-400">Effacer</button>
+      <button onclick="window.print()" class="btn btn-ghost btn-xs md:btn-sm gap-1">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        Imprimer
+      </button>
+      <button onclick="checkAndConfirm()" class="btn btn-primary btn-xs md:btn-sm px-5 shadow uppercase font-bold">Envoyer</button>
+    </div>
+  </div>
+
+  <form id="timeForm" class="p-4 md:p-6 space-y-6">
+
+    <!-- IDENTIFICATION + ODOMÈTRE -->
+    <div class="rounded-2xl border border-blue-200 bg-blue-50/40 p-4 space-y-4">
+      <p class="sec-label text-blue-700">Identification &amp; Odomètre *</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="sec-label text-slate-500 block mb-1.5">No Camion *</label>
+          <input type="text" id="camion-no" placeholder="Ex: C-502" style="font-size:16px" class="f-input blue-border">
         </div>
-
-        <form id="timeForm" class="p-6 md:p-8 space-y-10">
-            
-            <!-- Identification -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-bold text-xs uppercase text-blue-700">No Camion *</span></label>
-                    <input type="text" id="camion-no" placeholder="Ex: C-502" class="input input-bordered w-full border-blue-400 bg-blue-50/10">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-bold text-xs uppercase text-blue-700">Nom du Responsable *</span></label>
-                    <input type="text" id="resp-name" placeholder="Prénom Nom" class="input input-bordered w-full border-blue-400 bg-blue-50/10 font-semibold">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-bold text-xs uppercase text-blue-700">Semaine finissant le *</span></label>
-                    <input type="date" id="week-date" class="input input-bordered w-full border-blue-400 bg-blue-50/10">
-                </div>
-            </div>
-
-            <!-- Tableau Saisie Journalière -->
-            <div class="overflow-x-auto border border-gray-200 rounded-2xl bg-white shadow-sm">
-                <table class="table w-full" id="main-table">
-                    <thead class="bg-slate-800 text-white uppercase text-[10px]">
-                        <tr>
-                            <th class="w-32">Jour</th>
-                            <th class="w-32"># Projet (5 ch.)</th>
-                            <th class="text-center">KM</th>
-                            <th class="text-center">Heures</th>
-                            <th class="w-20 no-print text-center">Ajouter</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body"></tbody>
-                </table>
-            </div>
-
-            <!-- Résumé & Sécurité -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-                <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-                    <div class="bg-slate-100 px-6 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest border-b">Résumé hebdomadaire</div>
-                    <table class="table table-compact w-full text-sm">
-                        <tbody id="summary-body"></tbody>
-                        <tfoot class="bg-slate-50 border-t-2 font-black italic">
-                            <tr><td class="text-right">TOTAL :</td><td class="text-center text-blue-600" id="final-km">0</td><td class="text-center text-indigo-600" id="final-hours">0</td></tr>
-                        </tfoot>
-                    </table>
-                </div>
-
-                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200">
-                    <h3 class="font-bold text-blue-900 mb-4 uppercase text-xs tracking-widest">Inspection Sécurité</h3>
-                    <div class="form-control mb-5">
-                        <label class="label"><span class="label-text font-bold text-blue-700 text-[10px] uppercase text-blue-700">Dernière inspection *</span></label>
-                        <input datepicker="" datepicker-autohide="" type="text" id="insp-date" class="bg-white border-blue-400 border rounded-xl w-full p-3" placeholder="Choisir la date">
-                    </div>
-                    <div class="space-y-4">
-                        <label class="flex items-center gap-4 cursor-pointer"><input type="checkbox" id="check-jauge" class="checkbox checkbox-primary"><span class="text-sm font-semibold">Jauge VERT</span></label>
-                        <label class="flex items-center gap-4 cursor-pointer"><input type="checkbox" id="check-trousse" class="checkbox checkbox-primary"><span class="text-sm font-semibold">Trousse OK</span></label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Signature Automatisée -->
-            <div class="pt-12 flex justify-end">
-                <div class="w-full md:w-80 border-t-2 border-slate-900 pt-3 text-center">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Signature du Responsable</p>
-                    <input type="text" id="signature-input" readonly="" class="input input-ghost w-full text-center signature-font border-none bg-transparent">
-                </div>
-            </div>
-        </form>
+        <div>
+          <label class="sec-label text-slate-500 block mb-1.5">Responsable *</label>
+          <input type="text" id="resp-name" placeholder="Prénom Nom" style="font-size:16px" class="f-input blue-border">
+        </div>
+        <div>
+          <label class="sec-label text-slate-500 block mb-1.5">Semaine finissant le *</label>
+          <input type="date" id="week-date" style="font-size:16px" class="f-input blue-border" placeholder="aaaa-mm-jj">
+        </div>
+      </div>
+      <div class="border-t border-blue-100 pt-3 grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+        <div>
+          <label class="sec-label text-blue-600 block mb-1.5">Odomètre DÉBUT *</label>
+          <input type="number" id="odo-debut" placeholder="km" inputmode="numeric" style="font-size:16px"
+            class="f-input blue-border center" oninput="calcOdo()">
+        </div>
+        <div>
+          <label class="sec-label text-blue-600 block mb-1.5">Odomètre FIN *</label>
+          <input type="number" id="odo-fin" placeholder="km" inputmode="numeric" style="font-size:16px"
+            class="f-input blue-border center" oninput="calcOdo()">
+        </div>
+        <div class="md:col-span-2">
+          <label class="sec-label text-blue-600 block mb-1.5">Différence</label>
+          <div class="result-badge" id="odo-diff-badge">— km</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Modal Confirmation -->
-    <div id="confirm-modal" class="fixed top-0 left-0 right-0 z-50 hidden p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-full bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="relative bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
-            <h3 class="text-xl font-bold text-slate-800 mb-4">Prêt pour l'envoi ?</h3>
-            <p class="text-slate-500 text-sm mb-8">Rapport envoyé à Alexandre.Ferland@filtrum.ca</p>
-            <div class="flex flex-col gap-3">
-                <button onclick="sendDetailedEmail()" class="btn btn-primary w-full h-12 uppercase font-bold">Confirmer l'envoi</button>
-                <button onclick="closeModal()" class="btn btn-ghost w-full">Annuler</button>
-            </div>
-        </div>
+    <!-- TABLEAU DESKTOP -->
+    <div class="desktop-only overflow-x-auto border border-gray-200 rounded-2xl bg-white shadow-sm">
+      <table class="table w-full text-sm">
+        <thead class="bg-slate-800 text-white">
+          <tr class="text-[10px] uppercase tracking-widest">
+            <th class="col-day font-semibold py-3 px-3">Jour</th>
+            <th class="col-proj font-semibold px-2"># Projet</th>
+            <th class="col-km text-center font-semibold px-2">KM</th>
+            <th class="col-time text-center font-semibold px-2">Début</th>
+            <th class="col-time text-center font-semibold px-2">Fin</th>
+            <th class="col-tot text-center font-semibold px-2">Total h</th>
+            <th class="w-16 no-print text-center font-semibold">+</th>
+          </tr>
+        </thead>
+        <tbody id="table-body-desktop"></tbody>
+      </table>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@latest/dist/flowbite.min.js"></script>
-    <script>
-        const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-        const tableBody = document.getElementById('table-body');
-        const summaryBody = document.getElementById('summary-body');
-        const respInput = document.getElementById('resp-name');
-        const signatureInput = document.getElementById('signature-input');
-        
-        document.addEventListener('DOMContentLoaded', () => { 
-            jours.forEach(j => addRow(j)); 
-            calculate(); 
-            respInput.addEventListener('input', () => { signatureInput.value = respInput.value; });
-        });
+    <!-- CARTES MOBILE -->
+    <div class="mobile-only" id="mobile-cards"></div>
 
-        function handleProjectInput(input) {
-            const row = input.closest('tr');
-            const kmInput = row.querySelector('.km-val');
-            const hrInput = row.querySelector('.hr-val');
-            if (input.value.trim() !== "") {
-                if (kmInput.disabled) {
-                    kmInput.disabled = false; hrInput.disabled = false;
-                    kmInput.value = "0"; hrInput.value = "0";
-                }
-            } else {
-                kmInput.disabled = true; hrInput.disabled = true;
-                kmInput.value = ""; hrInput.value = "";
-            }
-            calculate();
+
+
+    <!-- RÉSUMÉ + SÉCURITÉ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+        <div class="bg-slate-100 px-4 py-2.5 border-b">
+          <p class="sec-label text-slate-500">Résumé kilométrique</p>
+        </div>
+        <table class="table table-compact w-full text-sm">
+          <tbody>
+            <tr class="border-b border-gray-100">
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0"></div>
+                  <span class="font-bold text-slate-700 text-sm">Facturable</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5 ml-4">Total KM des projets saisis</p>
+              </td>
+              <td class="text-center font-black text-blue-600 py-3 px-4 text-base" id="final-km">—</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-orange-400 flex-shrink-0"></div>
+                  <span class="font-bold text-slate-700 text-sm">Non facturable</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5 ml-4">KM odomètre − KM facturables</p>
+              </td>
+              <td class="text-center font-black text-orange-500 py-3 px-4 text-base" id="km-non-facturable">—</td>
+            </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-slate-200">
+            <tr class="bg-slate-50">
+              <td class="text-right pr-3 text-xs font-black uppercase text-slate-400 py-2">Total odomètre</td>
+              <td class="text-center font-black text-slate-600 py-2" id="final-km-odo">—</td>
+            </tr>
+          </tfoot>
+        </table>
+        <!-- DÉTAIL PAR PROJET -->
+        <div id="summary-detail-wrap">
+          <div class="bg-slate-50 px-4 py-2 border-t border-slate-200 flex items-center justify-between cursor-pointer select-none" onclick="toggleSummaryDetail()">
+            <p class="sec-label text-slate-400">Détail par projet</p>
+            <svg id="summary-chevron" class="w-4 h-4 text-slate-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <table id="summary-detail-table" class="table table-compact w-full text-sm">
+            <thead>
+              <tr class="text-[9px] uppercase text-slate-400 bg-white border-b border-slate-100">
+                <th class="font-semibold py-2 px-4">Projet</th>
+                <th class="text-center font-semibold px-4">KM</th>
+                <th class="text-center font-semibold px-4">Heures</th>
+              </tr>
+            </thead>
+            <tbody id="summary-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-blue-50 p-4 rounded-2xl border border-blue-200 space-y-4">
+        <p class="sec-label text-blue-700">Inspection Sécurité</p>
+        <div>
+          <label class="sec-label text-slate-500 block mb-1.5">Dernière inspection *</label>
+          <input type="date" id="insp-date" style="font-size:16px" class="f-input blue-border bg-white" placeholder="aaaa-mm-jj">
+        </div>
+        <label class="flex items-center gap-3 cursor-pointer bg-white rounded-xl p-3 border border-blue-100">
+          <input type="checkbox" id="check-jauge" class="checkbox checkbox-primary checkbox-sm flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="text-blue-600 flex-shrink-0">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 12L8.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+              <path d="M6 17a7 7 0 0 1 12 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M8.5 15.5L7 17" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span class="text-sm font-semibold text-slate-700">Jauge de l'extincteur OK</span>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 cursor-pointer bg-white rounded-xl p-3 border border-blue-100">
+          <input type="checkbox" id="check-trousse" class="checkbox checkbox-primary checkbox-sm flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="text-red-500 flex-shrink-0">
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+            <span class="text-sm font-semibold text-slate-700">Trousse de premiers soins OK</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="pt-6 flex justify-end">
+      <div class="w-full md:w-72 border-t-2 border-slate-800 pt-3 text-center">
+        <p class="sec-label text-slate-400 mb-1">Signature du responsable</p>
+        <input type="text" id="signature-input" readonly
+          class="input input-ghost w-full text-center signature-font border-none bg-transparent h-14">
+      </div>
+    </div>
+  </form>
+</div>
+
+
+</div>
+
+<!-- MODAL SAUVEGARDE -->
+<div id="save-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-xs w-full text-center">
+    <div class="text-4xl mb-3">💾</div>
+    <h3 class="text-lg font-bold text-slate-800 mb-2">Sauvegardé !</h3>
+    <p class="text-slate-500 text-sm mb-5">Les données sont enregistrées dans ce navigateur et seront restaurées à la prochaine ouverture.</p>
+    <button onclick="document.getElementById('save-modal').classList.add('hidden')" class="btn btn-primary w-full">OK</button>
+  </div>
+</div>
+
+<!-- MODAL ENVOI -->
+<div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl p-7 text-center max-w-xs w-full">
+    <h3 class="text-lg font-bold text-slate-800 mb-2">Prêt pour l'envoi ?</h3>
+    <p class="text-slate-500 text-sm mb-6">Rapport envoyé à <strong id="email-display"></strong></p>
+    <div class="flex flex-col gap-2">
+      <button onclick="sendDetailedEmail()" class="btn btn-primary w-full uppercase font-bold">Confirmer l'envoi</button>
+      <button onclick="closeModal()" class="btn btn-ghost w-full">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var STORAGE_KEY = 'filtrum_camion_v5';
+var DEST = ['camion','@','filtrum','.','ca'].join('');
+document.getElementById('email-display').textContent = DEST;
+
+var jours = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+
+
+var respInput;
+var sigInput;
+window.addEventListener('DOMContentLoaded', function() {
+  respInput = document.getElementById('resp-name');
+  sigInput  = document.getElementById('signature-input');
+  jours.forEach(function(j) { addDesktopRow(j); addMobileCard(j); });
+  calculate();
+  respInput.addEventListener('input', function() { sigInput.value = respInput.value; });
+  try {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) { restoreForm(JSON.parse(saved)); showToast('Données restaurées'); }
+  } catch(e) {}
+});
+
+// ── ODOMÈTRE ──────────────────────────────────────
+function calcOdo() {
+  var d = parseFloat(document.getElementById('odo-debut').value) || 0;
+  var f = parseFloat(document.getElementById('odo-fin').value)   || 0;
+  var el = document.getElementById('odo-diff-badge');
+  if (d === 0 && f === 0)  el.textContent = '— km';
+  else if (f < d)          el.textContent = '⚠️ Vérifier';
+  else                     el.textContent = (f - d).toFixed(0) + ' km';
+  calculate();
+}
+
+// ── HEURES ────────────────────────────────────────
+function timeToMin(t) {
+  if (!t || t.indexOf(':') === -1) return null;
+  var p = t.split(':');
+  return parseInt(p[0]) * 60 + parseInt(p[1]);
+}
+function minToTime(m) {
+  if (m == null || m < 0) return '';
+  var h = Math.floor(m / 60), mn = m % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (mn < 10 ? '0' : '') + mn;
+}
+function calcRowHours(totEl, debEl, finEl) {
+  var s = timeToMin(debEl.value), e = timeToMin(finEl.value);
+  if (s === null || e === null) { totEl.value = ''; return; }
+  var diff = e - s;
+  totEl.value = diff >= 0 ? minToTime(diff) : '⚠️';
+  calculate();
+}
+
+// ── DESKTOP ROWS ──────────────────────────────────
+function makeDesktopRow(jour, deletable) {
+  var row = document.createElement('tr');
+  row.className = 'hover:bg-slate-50 border-b border-gray-100';
+  row.dataset.jour = jour;
+  var delBtn = deletable
+    ? '<button type="button" onclick="this.closest(\'tr\').remove();calculate();" class="w-8 h-8 rounded-full bg-red-50 text-red-400 font-bold text-xl flex items-center justify-center">×</button>'
+    : '';
+  row.innerHTML =
+    '<td class="col-day text-[10px] font-bold uppercase text-slate-500 tracking-wide py-2 px-3 whitespace-nowrap">' + jour + '</td>' +
+    '<td class="py-1.5 px-2"><input type="text" maxlength="6" style="font-size:15px" class="f-input center proj-val" oninput="handleProjDesktop(this)" placeholder="—"></td>' +
+    '<td class="py-1.5 px-2"><input type="number" inputmode="decimal" step="0.1" style="font-size:15px" class="f-input center km-val" oninput="calculate()" disabled></td>' +
+    '<td class="py-1.5 px-2"><input type="time" style="font-size:15px" class="f-input center debut-val" oninput="calcRowDesktop(this)" disabled></td>' +
+    '<td class="py-1.5 px-2"><input type="time" style="font-size:15px" class="f-input center fin-val" oninput="calcRowDesktop(this)" disabled></td>' +
+    '<td class="py-1.5 px-2"><input type="text" readonly style="font-size:15px" class="f-input center tot-val bg-slate-50 text-slate-600 font-bold cursor-default" placeholder="—"></td>' +
+    '<td class="no-print text-center py-1.5 px-2"><div class="flex gap-1 justify-center">' +
+      '<button type="button" onclick="insertDesktopAfter(this,\'' + jour + '\')" class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-base flex items-center justify-center">+</button>' +
+      delBtn +
+    '</div></td>';
+  return row;
+}
+function addDesktopRow(jour) {
+  document.getElementById('table-body-desktop').appendChild(makeDesktopRow(jour, false));
+}
+function insertDesktopAfter(btn, jour) {
+  btn.closest('tr').after(makeDesktopRow(jour, true)); calculate();
+}
+function calcRowDesktop(input) {
+  var row = input.closest('tr');
+  calcRowHours(row.querySelector('.tot-val'), row.querySelector('.debut-val'), row.querySelector('.fin-val'));
+}
+function handleProjDesktop(input) {
+  var row = input.closest('tr');
+  var locked = input.value.trim() === '';
+  row.querySelector('.km-val').disabled    = locked;
+  row.querySelector('.debut-val').disabled = locked;
+  row.querySelector('.fin-val').disabled   = locked;
+  if (locked) {
+    row.querySelector('.km-val').value    = '';
+    row.querySelector('.debut-val').value = '';
+    row.querySelector('.fin-val').value   = '';
+    row.querySelector('.tot-val').value   = '';
+  }
+  calculate();
+}
+function handleProjMobile(input) {
+  var card = input.closest('.mobile-card');
+  var locked = input.value.trim() === '';
+  card.querySelector('.km-val').disabled    = locked;
+  card.querySelector('.debut-val').disabled = locked;
+  card.querySelector('.fin-val').disabled   = locked;
+  if (locked) {
+    card.querySelector('.km-val').value    = '';
+    card.querySelector('.debut-val').value = '';
+    card.querySelector('.fin-val').value   = '';
+    card.querySelector('.tot-val').textContent = '—';
+  }
+  calculate();
+}
+
+// ── MOBILE CARDS ──────────────────────────────────
+function buildCardHTML(jour, deletable) {
+  var delBtn = deletable
+    ? '<button type="button" onclick="this.closest(\'.mobile-card\').remove();calculate();" class="w-9 h-9 rounded-full bg-red-50 text-red-400 font-bold text-xl flex items-center justify-center">×</button>'
+    : '';
+  return '<div class="mobile-card-day">' + jour + '</div>' +
+    '<div class="m-grid-4 mb-2">' +
+      '<div><div class="m-lbl"># Projet</div><input type="text" maxlength="6" class="m-inp proj-val" style="font-size:14px" oninput="handleProjMobile(this)" placeholder="—"></div>' +
+      '<div><div class="m-lbl">KM</div><input type="number" inputmode="decimal" step="0.1" class="m-inp km-val" style="font-size:14px" oninput="calculate()" disabled></div>' +
+      '<div><div class="m-lbl">Début</div><input type="time" class="m-inp debut-val" oninput="calcRowMobile(this)" disabled></div>' +
+      '<div><div class="m-lbl">Fin</div><input type="time" class="m-inp fin-val" oninput="calcRowMobile(this)" disabled></div>' +
+    '</div>' +
+    '<div class="flex items-center justify-between">' +
+      '<div class="flex items-center gap-2"><span class="m-lbl">Total :</span><span class="tot-val text-sm font-bold text-slate-600">—</span></div>' +
+      '<div class="flex gap-2 no-print">' +
+        '<button type="button" onclick="insertMobileAfter(this,\'' + jour + '\')" class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xl flex items-center justify-center shadow">+</button>' +
+        delBtn +
+      '</div>' +
+    '</div>';
+}
+function addMobileCard(jour) {
+  var c = document.createElement('div');
+  c.className = 'mobile-card'; c.dataset.jour = jour;
+  c.innerHTML = buildCardHTML(jour, false);
+  document.getElementById('mobile-cards').appendChild(c);
+}
+function insertMobileAfter(btn, jour) {
+  var c = document.createElement('div');
+  c.className = 'mobile-card'; c.dataset.jour = jour;
+  c.innerHTML = buildCardHTML(jour, true);
+  btn.closest('.mobile-card').after(c); calculate();
+}
+function calcRowMobile(input) {
+  var card = input.closest('.mobile-card');
+  var s = timeToMin(card.querySelector('.debut-val').value);
+  var e = timeToMin(card.querySelector('.fin-val').value);
+  var el = card.querySelector('.tot-val');
+  if (s === null || e === null) { el.textContent = '—'; }
+  else { var diff = e - s; el.textContent = diff >= 0 ? minToTime(diff) + ' h' : '⚠️'; }
+  calculate();
+}
+
+// ── CALCULATE ─────────────────────────────────────
+var summaryData = {};
+function calculate() {
+  summaryData = {};
+  var gKm = 0, gMin = 0;
+
+  function add(projEl, kmEl, totEl) {
+    var id = ((projEl && projEl.value) || '').trim().toUpperCase() || 'AUTRE';
+    var km = parseFloat((kmEl && kmEl.value) || 0) || 0;
+    var totStr = totEl ? (totEl.value !== undefined ? totEl.value : totEl.textContent) : '';
+    totStr = totStr.replace(' h', '');
+    var min = timeToMin(totStr) || 0;
+    if (!summaryData[id]) summaryData[id] = { km: 0, min: 0 };
+    summaryData[id].km += km; summaryData[id].min += min;
+    gKm += km; gMin += min;
+  }
+
+  document.querySelectorAll('#table-body-desktop tr').forEach(function(r) {
+    add(r.querySelector('.proj-val'), r.querySelector('.km-val'), r.querySelector('.tot-val'));
+  });
+  document.querySelectorAll('#mobile-cards .mobile-card').forEach(function(c) {
+    add(c.querySelector('.proj-val'), c.querySelector('.km-val'), c.querySelector('.tot-val'));
+  });
+
+  // KM odomètre
+  var odoD = parseFloat(document.getElementById('odo-debut').value) || 0;
+  var odoF = parseFloat(document.getElementById('odo-fin').value) || 0;
+  var odoTotal = (odoF > odoD) ? (odoF - odoD) : 0;
+  var nonFact = odoTotal - gKm;
+
+  document.getElementById('final-km').textContent =
+    gKm > 0 ? gKm.toFixed(1) + ' km' : '—';
+  document.getElementById('km-non-facturable').textContent =
+    odoTotal > 0 ? (nonFact >= 0 ? nonFact.toFixed(1) + ' km' : '⚠️ ' + Math.abs(nonFact).toFixed(1) + ' km de plus') : '—';
+  document.getElementById('final-km-odo').textContent =
+    odoTotal > 0 ? odoTotal.toFixed(0) + ' km' : '—';
+
+  // Détail par projet
+  var sb = document.getElementById('summary-body');
+  var wrap = document.getElementById('summary-detail-wrap');
+  sb.innerHTML = '';
+  var hasData = false;
+  for (var id in summaryData) {
+    var t = summaryData[id];
+    if (id === 'AUTRE' && t.km === 0 && t.min === 0) continue;
+    if (t.km === 0 && t.min === 0) continue;
+    hasData = true;
+    sb.innerHTML += '<tr class="border-b border-gray-50 hover:bg-slate-50">' +
+      '<td class="font-bold text-slate-700 py-1.5 text-sm px-4">' + id + '</td>' +
+      '<td class="text-center text-sm py-1.5 px-4">' + (t.km > 0 ? t.km.toFixed(1) : '—') + '</td>' +
+      '<td class="text-center text-sm py-1.5 px-4">' + (t.min > 0 ? minToTime(t.min) : '—') + '</td>' +
+      '</tr>';
+  }
+  // always visible
+}
+
+function toggleSummaryDetail() {
+  var table = document.getElementById('summary-detail-table');
+  var chevron = document.getElementById('summary-chevron');
+  table.classList.toggle('hidden');
+  chevron.style.transform = table.classList.contains('hidden') ? '' : 'rotate(180deg)';
+}
+
+// ── SAVE / RESTORE ────────────────────────────────
+function saveForm() {
+  var desktop = [], mobile = [];
+  document.querySelectorAll('#table-body-desktop tr').forEach(function(r) {
+    desktop.push({ jour: r.dataset.jour, proj: r.querySelector('.proj-val').value, km: r.querySelector('.km-val').value, deb: r.querySelector('.debut-val').value, fin: r.querySelector('.fin-val').value });
+  });
+  document.querySelectorAll('#mobile-cards .mobile-card').forEach(function(c) {
+    mobile.push({ jour: c.dataset.jour, proj: c.querySelector('.proj-val').value, km: c.querySelector('.km-val').value, deb: c.querySelector('.debut-val').value, fin: c.querySelector('.fin-val').value });
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    camion: document.getElementById('camion-no').value,
+    resp:   respInput.value,
+    week:   document.getElementById('week-date').value,
+    odoD:   document.getElementById('odo-debut').value,
+    odoF:   document.getElementById('odo-fin').value,
+    insp:   document.getElementById('insp-date').value,
+    jauge:  document.getElementById('check-jauge').checked,
+    trousse:document.getElementById('check-trousse').checked,
+    desktop: desktop, mobile: mobile,
+    savedAt: new Date().toISOString()
+  }));
+  document.getElementById('save-modal').classList.remove('hidden');
+}
+function clearSave() {
+  if (confirm('Effacer toutes les données sauvegardées ?')) {
+    localStorage.removeItem(STORAGE_KEY); showToast('Sauvegarde effacée');
+  }
+}
+function groupByJour(rows) {
+  var order = [], data = {};
+  rows.forEach(function(r) {
+    if (order.indexOf(r.jour) === -1) order.push(r.jour);
+    if (!data[r.jour]) data[r.jour] = [];
+    data[r.jour].push(r);
+  });
+  return { order: order, data: data };
+}
+function restoreForm(d) {
+  if (!d) return;
+  function sv(id, v) { var el = document.getElementById(id); if (el && v != null) el.value = v; }
+  sv('camion-no', d.camion); sv('resp-name', d.resp); sv('week-date', d.week);
+  sv('odo-debut', d.odoD); sv('odo-fin', d.odoF); sv('insp-date', d.insp);
+  document.getElementById('check-jauge').checked   = !!d.jauge;
+  document.getElementById('check-trousse').checked = !!d.trousse;
+  sigInput.value = d.resp || '';
+  if (d.desktop && d.desktop.length) {
+    document.getElementById('table-body-desktop').innerHTML = '';
+    var grp = groupByJour(d.desktop);
+    grp.order.forEach(function(jour) {
+      grp.data[jour].forEach(function(rd, i) {
+        var row = makeDesktopRow(jour, i > 0);
+        document.getElementById('table-body-desktop').appendChild(row);
+        row.querySelector('.proj-val').value  = rd.proj || '';
+        if (rd.proj) {
+          row.querySelector('.km-val').disabled    = false;
+          row.querySelector('.debut-val').disabled = false;
+          row.querySelector('.fin-val').disabled   = false;
         }
-
-        function addRow(jour) {
-            const row = document.createElement('tr');
-            row.className = "hover:bg-slate-50 border-b border-gray-100";
-            row.innerHTML = `
-                <td class="font-black text-slate-400 text-[10px] uppercase">${jour}</td>
-                <td><input type="text" inputmode="numeric" maxlength="5" class="input input-sm input-bordered w-24 font-bold text-center border-gray-300" oninput="handleProjectInput(this)"></td>
-                <td><input type="number" inputmode="decimal" step="0.1" disabled class="input input-sm input-bordered w-full text-center border-gray-300 km-val" oninput="calculate()"></td>
-                <td><input type="number" inputmode="decimal" step="0.25" disabled class="input input-sm input-bordered w-full text-center border-gray-300 hr-val" oninput="calculate()"></td>
-                <td class="no-print text-center"><button type="button" onclick="insertAfter(this, '${jour}')" class="btn btn-primary btn-outline btn-circle btn-touch font-bold text-lg">+</button></td>
-            `;
-            tableBody.appendChild(row);
+        row.querySelector('.km-val').value    = rd.km   || '';
+        row.querySelector('.debut-val').value = rd.deb  || '';
+        row.querySelector('.fin-val').value   = rd.fin  || '';
+        calcRowHours(row.querySelector('.tot-val'), row.querySelector('.debut-val'), row.querySelector('.fin-val'));
+      });
+    });
+  }
+  if (d.mobile && d.mobile.length) {
+    document.getElementById('mobile-cards').innerHTML = '';
+    var grp2 = groupByJour(d.mobile);
+    grp2.order.forEach(function(jour) {
+      grp2.data[jour].forEach(function(cd, i) {
+        var card = document.createElement('div');
+        card.className = 'mobile-card'; card.dataset.jour = jour;
+        card.innerHTML = buildCardHTML(jour, i > 0);
+        document.getElementById('mobile-cards').appendChild(card);
+        card.querySelector('.proj-val').value  = cd.proj || '';
+        if (cd.proj) {
+          card.querySelector('.km-val').disabled    = false;
+          card.querySelector('.debut-val').disabled = false;
+          card.querySelector('.fin-val').disabled   = false;
         }
+        card.querySelector('.km-val').value    = cd.km   || '';
+        card.querySelector('.debut-val').value = cd.deb  || '';
+        card.querySelector('.fin-val').value   = cd.fin  || '';
+        calcRowMobile(card.querySelector('.debut-val'));
+      });
+    });
+  }
 
-        function insertAfter(btn, jour) {
-            const newRow = document.createElement('tr');
-            newRow.className = "hover:bg-slate-50 border-b border-gray-100";
-            newRow.innerHTML = `
-                <td class="font-black text-slate-400 text-[10px] uppercase">${jour}</td>
-                <td><input type="text" inputmode="numeric" maxlength="5" class="input input-sm input-bordered w-24 font-bold text-center border-gray-300" oninput="handleProjectInput(this)"></td>
-                <td><input type="number" inputmode="decimal" step="0.1" disabled class="input input-sm input-bordered w-full text-center border-gray-300 km-val" oninput="calculate()"></td>
-                <td><input type="number" inputmode="decimal" step="0.25" disabled class="input input-sm input-bordered w-full text-center border-gray-300 hr-val" oninput="calculate()"></td>
-                <td class="no-print text-center flex gap-1 justify-center">
-                    <button type="button" onclick="insertAfter(this, '${jour}')" class="btn btn-primary btn-outline btn-circle btn-touch font-bold text-lg">+</button>
-                    <button type="button" onclick="this.closest('tr').remove(); calculate();" class="btn btn-ghost text-error btn-circle btn-touch text-xl">×</button>
-                </td>
-            `;
-            btn.closest('tr').after(newRow);
-            calculate();
-        }
+  calcOdo(); calculate();
+}
 
-        let summaryData = {};
-        function calculate() {
-            summaryData = {}; let gKm = 0, gHr = 0;
-            tableBody.querySelectorAll('tr').forEach(row => {
-                const idInput = row.querySelector('input[type="text"]');
-                const id = idInput.value.trim().toUpperCase() || "AUTRE";
-                const km = parseFloat(row.querySelector('.km-val').value) || 0;
-                const hr = parseFloat(row.querySelector('.hr-val').value) || 0;
-                if (!summaryData[id]) summaryData[id] = { km: 0, hr: 0 };
-                summaryData[id].km += km; summaryData[id].hr += hr; gKm += km; gHr += hr;
-            });
-            summaryBody.innerHTML = '';
-            for (const [id, totals] of Object.entries(summaryData)) {
-                if (id === "AUTRE" && totals.km === 0 && totals.hr === 0) continue;
-                summaryBody.innerHTML += `<tr><td class="font-bold text-slate-700">${id}</td><td class="text-center font-semibold">${totals.km.toFixed(1)}</td><td class="text-center font-semibold">${totals.hr.toFixed(2)}</td></tr>`;
-            }
-            document.getElementById('final-km').innerText = gKm.toFixed(1);
-            document.getElementById('final-hours').innerText = gHr.toFixed(2);
-        }
+// ── TOAST ─────────────────────────────────────────
+function showToast(msg, ms) {
+  ms = ms || 3000;
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, ms);
+}
 
-        function checkAndConfirm() {
-            const camion = document.getElementById('camion-no').value.trim();
-            const resp = respInput.value.trim();
-            const week = document.getElementById('week-date').value.trim();
-            const insp = document.getElementById('insp-date').value.trim();
-            if (!camion || !resp || !week || !insp) { alert("Veuillez remplir les cases obligatoires."); return; }
-            document.getElementById('confirm-modal').classList.remove('hidden');
-        }
-
-        function closeModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
-
-        function sendDetailedEmail() {
-            const name = respInput.value;
-            const camion = document.getElementById('camion-no').value;
-            const date = document.getElementById('week-date').value;
-            const inspDate = document.getElementById('insp-date').value;
-            const jauge = document.getElementById('check-jauge').checked ? "VALIDE" : "NON VÉRIFIÉ";
-            const trousse = document.getElementById('check-trousse').checked ? "OK" : "NON VÉRIFIÉ";
-
-            let bodyText = `RAPPORT DE FEUILLE DE CAMION - FILTRUM CONSTRUCTION\n\n`;
-            bodyText += `RESPONSABLE : ${name.toUpperCase()}\nCAMION      : ${camion.toUpperCase()}\nSEMAINE DU  : ${date}\n----------------------------------\n\nDÉTAIL PROJETS :\n`;
-            for (const [id, totals] of Object.entries(summaryData)) {
-                if (totals.km > 0 || totals.hr > 0) {
-                    bodyText += `PROJET ${id.padEnd(8)} : ${totals.km.toFixed(1).padStart(5)} KM | ${totals.hr.toFixed(2).padStart(5)} H\n`;
-                }
-            }
-            bodyText += `\nTOTAL HEBDO : ${document.getElementById('final-km').innerText} KM | ${document.getElementById('final-hours').innerText} H\n----------------------------------\n\nSÉCURITÉ :\n- Inspection extincteur : ${inspDate}\n- Jauge : ${jauge}\n- Trousse : ${trousse}\n\nSIGNATURE : ${name}`;
-
-            window.location.href = `mailto:Alexandre.Ferland@filtrum.ca?subject=Feuille de Camion - ${name} - Camion ${camion}&body=${encodeURIComponent(bodyText)}`;
-            closeModal();
-        }
-    </script>
-
-
-``` [DONE]
-</body></html>
+// ── ENVOI ─────────────────────────────────────────
+function checkAndConfirm() {
+  var c  = document.getElementById('camion-no').value.trim();
+  var r  = respInput.value.trim();
+  var w  = document.getElementById('week-date').value.trim();
+  var i  = document.getElementById('insp-date').value.trim();
+  var od = document.getElementById('odo-debut').value.trim();
+  var of = document.getElementById('odo-fin').value.trim();
+  if (!c || !r || !w || !i || !od || !of) {
+    alert('Veuillez remplir tous les champs obligatoires : No camion, responsable, semaine, odomètres, inspection.'); return;
+  }
+  document.getElementById('confirm-modal').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('confirm-modal').classList.add('hidden'); }
+function sendDetailedEmail() {
+  var name    = respInput.value;
+  var camion  = document.getElementById('camion-no').value;
+  var date    = document.getElementById('week-date').value;
+  var inspD   = document.getElementById('insp-date').value;
+  var jauge   = document.getElementById('check-jauge').checked   ? 'OK' : 'NON VÉRIFIÉ';
+  var trousse = document.getElementById('check-trousse').checked ? 'OK' : 'NON VÉRIFIÉ';
+  var odoD    = document.getElementById('odo-debut').value || '—';
+  var odoF    = document.getElementById('odo-fin').value   || '—';
+  var diff    = document.getElementById('odo-diff-badge').textContent;
+  var body = 'RAPPORT FEUILLE DE CAMION - FILTRUM CONSTRUCTION\n\n';
+  body += 'RESPONSABLE : ' + name.toUpperCase() + '\nCAMION      : ' + camion.toUpperCase() + '\nSEMAINE DU  : ' + date + '\n';
+  body += '----------------------------------\nODOMÈTRE :\n  Début : ' + odoD + ' km\n  Fin   : ' + odoF + ' km\n  Écart : ' + diff + '\n';
+  body += '\nDÉTAIL PAR PROJET :\n';
+  for (var id in summaryData) {
+    var t = summaryData[id];
+    if (t.km === 0 && t.min === 0) continue;
+    body += '  PROJET ' + id + ' : ' + (t.km > 0 ? t.km.toFixed(1) + ' KM' : '—') + '  |  ' + (t.min > 0 ? minToTime(t.min) + ' H' : '—') + '\n';
+  }
+  body += '\n----------------------------------\nKM FACTURABLE     : ' + document.getElementById('final-km').textContent + '\n';
+  body += 'KM NON FACTURABLE : ' + document.getElementById('km-non-facturable').textContent + '\n';
+  body += 'TOTAL ODOMÈTRE    : ' + document.getElementById('final-km-odo').textContent + '\n';
+  body += '----------------------------------\nSÉCURITÉ :\n  Inspection : ' + inspD + '\n  Jauge extincteur : ' + jauge + '\n  Trousse premiers soins : ' + trousse + '\n\nSIGNATURE : ' + name;
+  var subj = 'Feuille de Camion - ' + name + ' - Camion ' + camion;
+  window.location.href = 'mailto:' + DEST + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+  closeModal();
+}
+</script>
+</body>
+</html>
